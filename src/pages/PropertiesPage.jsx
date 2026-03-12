@@ -11,6 +11,8 @@ const PropertiesPage = () => {
   const [mapCenter, setMapCenter] = useState(null);
   const [radiusKm, setRadiusKm] = useState(10);
   const [selectedPropertyId, setSelectedPropertyId] = useState(null);
+  const [searchPolygon, setSearchPolygon] = useState(null);
+  const [boxFactor, setBoxFactor] = useState(1.0);
 
   // Load all properties once
   useEffect(() => {
@@ -77,11 +79,11 @@ const PropertiesPage = () => {
     }
   }, []);
 
-  // Filter properties within radius of mapCenter
   const visibleProperties = useMemo(() => {
     if (!mapCenter) return allProperties;
 
-    return allProperties.filter((p) => {
+    // 1) radius filter
+    let filtered = allProperties.filter((p) => {
       const distance = haversineDistanceKm(
         mapCenter.lat,
         mapCenter.lng,
@@ -90,13 +92,41 @@ const PropertiesPage = () => {
       );
       return distance <= radiusKm;
     });
-  }, [allProperties, mapCenter, radiusKm]);
+
+    // 2) polygon filter (if exists)
+    if (!searchPolygon || !Array.isArray(searchPolygon.coordinates)) {
+      return filtered;
+    }
+
+    const ring = searchPolygon.coordinates[0] || [];
+
+    const pointInPolygon = (lng, lat) => {
+      // ray casting algorithm
+      let inside = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const xi = ring[i][0],
+          yi = ring[i][1];
+        const xj = ring[j][0],
+          yj = ring[j][1];
+
+        const intersect =
+          yi > lat !== yj > lat &&
+          lng < ((xj - xi) * (lat - yi)) / (yj - yi + 1e-9) + xi;
+
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    };
+
+    filtered = filtered.filter((p) => pointInPolygon(p.longitude, p.latitude));
+
+    return filtered;
+  }, [allProperties, mapCenter, radiusKm, searchPolygon]);
+
 
   return (
     <div data-testid="properties-container">
-      <div data-testid="view-toggle">
-        View toggle
-      </div>
+      <div data-testid="view-toggle">View toggle</div>
 
       {/* Location autocomplete */}
       <div style={{ marginBottom: '0.5rem', maxWidth: 400 }}>
@@ -151,6 +181,22 @@ const PropertiesPage = () => {
         </label>
       </div>
 
+      {/* Box factor slider (polygon-like area) */}
+      <div style={{ marginBottom: '0.5rem', maxWidth: 400 }}>
+        <label>
+          Box factor: {boxFactor.toFixed(1)}×
+          <input
+            type="range"
+            min="0.5"
+            max="3"
+            step="0.1"
+            value={boxFactor}
+            onChange={(e) => setBoxFactor(Number(e.target.value))}
+            style={{ width: '100%', display: 'block' }}
+          />
+        </label>
+      </div>
+
       <div style={{ display: 'flex', gap: '1rem', minHeight: '400px' }}>
         <div
           style={{ flex: 1, border: '1px solid #ccc', minHeight: 400 }}
@@ -159,6 +205,8 @@ const PropertiesPage = () => {
           <MapContainer
             properties={visibleProperties}
             onMarkerClick={handleMarkerClick}
+            searchPolygon={searchPolygon}
+            onSearchPolygonChange={setSearchPolygon}
           />
         </div>
 
@@ -184,9 +232,7 @@ const PropertiesPage = () => {
                   selectedPropertyId === p.id ? '#dbeafe' : 'white'
               }}
             >
-              <div data-testid={`property-title-${p.id}`}>
-                {p.title}
-              </div>
+              <div data-testid={`property-title-${p.id}`}>{p.title}</div>
               <div data-testid={`property-price-${p.id}`}>
                 ${p.price.toLocaleString()}
               </div>
