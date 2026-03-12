@@ -1,0 +1,40 @@
+# Dockerfile.test - Jest + Puppeteer integration tests
+FROM node:20-bullseye
+
+# Skip Puppeteer browser download; we'll use system Chromium
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+
+RUN apt-get update && \
+    apt-get install -y \
+      chromium \
+      fonts-liberation \
+      libatk-bridge2.0-0 \
+      libnss3 \
+      libxss1 \
+      libatk1.0-0 \
+      libasound2 \
+      libx11-xcb1 \
+      libxcb1 \
+      libxcomposite1 \
+      libxdamage1 \
+      libxfixes3 \
+      libxrandr2 \
+      libgbm1 \
+      libpango-1.0-0 \
+      libpangocairo-1.0-0 \
+      libcairo2 \
+      libatspi2.0-0 \
+      libdrm2 \
+      libxkbcommon0 \
+      libgtk-3-0 \
+      && rm -rf /var/lib/apt/lists/*
+
+CMD ["npm", "run", "test:integration"]
