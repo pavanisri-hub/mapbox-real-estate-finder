@@ -1,28 +1,336 @@
+/* Global reset / base */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f3f4f6; /* light gray */
+  color: #111827;       /* slate-900 */
 }
 
+/* Top nav */
 nav {
-  background: #0f172a;
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
   color: white;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+nav > *:first-child {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.9rem;
 }
 
 nav a {
-  color: white;
+  color: #e5e7eb;
   text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  transition: background 0.2s ease, transform 0.1s ease, color 0.2s ease;
 }
 
 nav a + a {
-  margin-left: 1rem;
+  margin-left: 0.5rem;
 }
 
+nav a:hover {
+  background: rgba(15, 23, 42, 0.18);
+  transform: translateY(-1px);
+  color: #ffffff;
+}
+
+/* Main layout */
 main {
-  padding: 1rem;
+  padding: 1.5rem 1.75rem;
+  max-width: 1320px;
+  margin: 0 auto;
 }
 
+/* Properties page layout */
 [data-testid="properties-container"] {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+}
+
+/* View toggle badge */
+[data-testid="view-toggle"] {
+  align-self: flex-start;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  background: #e5edff;
+  border: 1px solid #bfdbfe;
+  color: #1d4ed8;
+}
+
+/* Top controls (autocomplete, sliders) */
+[data-testid="properties-container"] > div:nth-child(2),
+[data-testid="properties-container"] > div:nth-child(3),
+[data-testid="properties-container"] > div:nth-child(4) {
+  max-width: 460px;
+}
+
+/* Inputs / sliders general styling */
+input[type="text"],
+input[type="number"],
+input[type="range"],
+select {
+  width: 100%;
+  font: inherit;
+}
+
+input[type="text"],
+input[type="number"],
+select {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  color: #111827;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.6rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+input[type="text"]::placeholder,
+input[type="number"]::placeholder {
+  color: #9ca3af;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.6);
+  background: #f9fafb;
+}
+
+/* Slider */
+input[type="range"] {
+  appearance: none;
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #60a5fa, #22c55e);
+  outline: none;
+  margin-top: 0.4rem;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  cursor: pointer;
+}
+
+/* Autocomplete dropdown */
+[data-testid="properties-container"] > div div[style*="overflowY"] {
+  border-radius: 0.6rem;
+  overflow: hidden;
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.15);
+  background: #ffffff;
+}
+
+/* Map + list wrapper (the flex you have inline) */
+/* Increase visual size by padding and shadows on children */
+[data-testid="map-container"] {
+  background: #e5f0ff;
+  border-radius: 1.1rem;
+  overflow: hidden;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.18);
+  min-height: 480px; /* bigger map */
+}
+
+[data-testid="property-list"] {
+  background: #ffffff;
+  border-radius: 1.1rem;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.18);
+  min-height: 480px; /* bigger list panel */
+}
+
+/* Property cards inside property-list */
+[data-testid="property-list"] [data-testid^="property-card-"] {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 1rem 1.2rem;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+[data-testid="property-list"] [data-testid^="property-card-"]:last-child {
+  border-bottom: none;
+}
+
+[data-testid="property-list"] [data-testid^="property-card-"]:hover {
+  background: #eff6ff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+/* Stronger typography on cards */
+[data-testid^="property-title-"] {
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.25rem;
+  font-size: 1rem;
+}
+
+[data-testid^="property-price-"] {
+  color: #16a34a;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+[data-testid^="property-address-"] {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-top: 0.2rem;
+}
+
+/* Save button */
+button[data-testid^="save-property-"] {
+  margin-top: 0.6rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(22, 163, 74, 0.4);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+button[data-testid^="save-property-"]:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 10px 24px rgba(22, 163, 74, 0.55);
+}
+
+/* Selected card background override for light theme */
+[data-testid="property-list"] [data-testid^="property-card-"][style*="#dbeafe"] {
+  background: #dbeafe !important;
+}
+
+/* Advanced search page */
+[data-testid="search-filters"] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  max-width: 460px;
+  margin-top: 1.25rem;
+  background: #ffffff;
+  padding: 1rem 1.2rem;
+  border-radius: 1rem;
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.14);
+}
+
+[data-testid="search-filters"] button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.6rem;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: #2563eb;
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.45);
+  transition: transform 0.1s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+[data-testid="search-filters"] button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+/* Results count */
+[data-testid="results-count"] {
+  margin-top: 0.9rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+/* Property detail page */
+[data-testid="property-detail-container"] {
+  background: #ffffff;
+  border-radius: 1.1rem;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 22px 45px rgba(15, 23, 42, 0.18);
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.5rem;
+}
+
+[data-testid="property-title"] {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+[data-testid="property-price"] {
+  margin-top: 0.25rem;
+  font-size: 1.1rem;
+  color: #16a34a;
+  font-weight: 700;
+}
+
+[data-testid="property-full-address"] {
+  margin-top: 0.3rem;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+[data-testid="property-coordinates"] {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+[data-testid="property-map"] {
+  background: #e5f0ff;
+  border-radius: 0.9rem;
+  overflow: hidden;
+}
+
+/* Nearby amenities */
+[data-testid="nearby-amenities"] {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  color: #111827;
+}
+
+/* Saved items generic styling if you use such test IDs */
+[data-testid^="saved-search-"],
+[data-testid^="saved-property-"] {
+  background: #ffffff;
+  border-radius: 0.9rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 12px 26px rgba(15, 23, 42, 0.12);
+}
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+  main {
+    padding: 1rem;
+  }
+
+  [data-testid="property-detail-container"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
