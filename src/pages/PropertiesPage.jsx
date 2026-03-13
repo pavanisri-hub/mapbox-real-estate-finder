@@ -34,20 +34,55 @@ const PropertiesPage = () => {
   }, []);
 
   // Apply filters saved by AdvancedSearchPage (if any)
-  useEffect(() => {
-    const stored = JSON.parse(
-      window.localStorage.getItem("advancedFilters") || "null"
-    );
-    if (stored) {
-      setLocationQuery(stored.locationQuery || "");
-      if (stored.radiusKm) setRadiusKm(stored.radiusKm);
-      if (stored.priceMin != null) setPriceMin(stored.priceMin);
-      if (stored.priceMax != null) setPriceMax(stored.priceMax);
-      if (stored.bedroomsMin != null) setBedroomsMin(stored.bedroomsMin);
-    }
-  }, []);
+  // Apply filters saved by AdvancedSearchPage (if any)
+useEffect(() => {
+  const stored = JSON.parse(
+    window.localStorage.getItem("advancedFilters") || "null"
+  );
+  if (stored) {
+    setLocationQuery(stored.locationQuery || "");
+    if (stored.radiusKm) setRadiusKm(stored.radiusKm);
+    if (stored.priceMin != null) setPriceMin(stored.priceMin);
+    if (stored.priceMax != null) setPriceMax(stored.priceMax);
+    if (stored.bedroomsMin != null) setBedroomsMin(stored.bedroomsMin);
+    window.localStorage.removeItem("advancedFilters");
+  }
+}, []);
 
-  // Fetch geocoding suggestions when user types
+
+useEffect(() => {
+  if (!locationQuery || mapCenter) return;
+
+  let active = true;
+
+  (async () => {
+    try {
+      const results = await geocodeLocation(locationQuery);
+      console.log("geocode results for", locationQuery, results);
+      if (!active || !results || results.length === 0) return;
+
+      const first = results[0];
+      const [lng, lat] = first.center;
+      setMapCenter({ lng, lat });
+
+      setRadiusKm(25);
+
+      if (window.mapboxMap) {
+        window.mapboxMap.setCenter([lng, lat]);
+        window.mapboxMap.setZoom(11);
+      }
+    } catch (e) {
+      console.error("geocodeLocation failed", e);
+    }
+  })();
+
+  return () => {
+    active = false;
+  };
+}, [locationQuery, mapCenter]);
+
+
+
   useEffect(() => {
     let active = true;
 
@@ -71,16 +106,18 @@ const PropertiesPage = () => {
   }, [locationQuery]);
 
   const handleSuggestionClick = (s) => {
-    setSuggestions([]);
-    setLocationQuery(s.label);
-    const [lng, lat] = s.center;
-    setMapCenter({ lng, lat });
+  setSuggestions([]);
+  setLocationQuery(s.label);
+  const [lng, lat] = s.center;
+  setMapCenter({ lng, lat });
+  setRadiusKm(25);
 
-    if (window.mapboxMap) {
-      window.mapboxMap.setCenter([lng, lat]);
-      window.mapboxMap.setZoom(12);
-    }
-  };
+  if (window.mapboxMap) {
+    window.mapboxMap.setCenter([lng, lat]);
+    window.mapboxMap.setZoom(11);
+  }
+};
+
 
   const handleRadiusChange = (e) => {
     setRadiusKm(Number(e.target.value));
@@ -111,7 +148,7 @@ const PropertiesPage = () => {
   const visibleProperties = useMemo(() => {
     if (!mapCenter) return allProperties;
 
-    // 1) radius filter
+    
     let filtered = allProperties.filter((p) => {
       const distance = haversineDistanceKm(
         mapCenter.lat,
@@ -122,12 +159,11 @@ const PropertiesPage = () => {
       return distance <= radiusKm;
     });
 
-    // 2) polygon filter (if exists)
     if (searchPolygon && Array.isArray(searchPolygon.coordinates)) {
       const ring = searchPolygon.coordinates[0] || [];
 
       const pointInPolygon = (lng, lat) => {
-        // ray casting algorithm
+        
         let inside = false;
         for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
           const xi = ring[i][0],
@@ -147,7 +183,7 @@ const PropertiesPage = () => {
       filtered = filtered.filter((p) => pointInPolygon(p.longitude, p.latitude));
     }
 
-    // 3) price and bedrooms filters from AdvancedSearchPage
+    
     filtered = filtered.filter((p) => {
       if (priceMin != null && p.price < priceMin) return false;
       if (priceMax != null && p.price > priceMax) return false;
@@ -253,44 +289,51 @@ const PropertiesPage = () => {
         </div>
 
         <div
-          style={{
-            flex: 1,
-            border: "1px solid #ccc",
-            minHeight: 400,
-            overflowY: "auto"
-          }}
-          data-testid="property-list"
-        >
-          {visibleProperties.map((p) => (
-            <div
-              key={p.id}
-              data-testid={`property-card-${p.id}`}
-              data-latitude={p.latitude}
-              data-longitude={p.longitude}
-              style={{
-                borderBottom: "1px solid #e5e7eb",
-                padding: "0.75rem",
-                backgroundColor:
-                  selectedPropertyId === p.id ? "#dbeafe" : "white"
-              }}
-            >
-              <div data-testid={`property-title-${p.id}`}>{p.title}</div>
-              <div data-testid={`property-price-${p.id}`}>
-                ${p.price.toLocaleString()}
-              </div>
-              <div data-testid={`property-address-${p.id}`}>
-                {p.address}, {p.city}, {p.state} {p.zipcode}
-              </div>
-              <button
-                type="button"
-                data-testid={`save-property-${p.id}`}
-                onClick={() => handleSaveProperty(p)}
-              >
-                Save
-              </button>
-            </div>
-          ))}
+  style={{
+    flex: 1,
+    border: "1px solid #ccc",
+    minHeight: 400,
+    overflowY: "auto"
+  }}
+  data-testid="property-list"
+>
+  {visibleProperties.length === 0 ? (
+    <div style={{ padding: "0.75rem" }}>
+      No properties found for this search.
+    </div>
+  ) : (
+    visibleProperties.map((p) => (
+      <div
+        key={p.id}
+        data-testid={`property-card-${p.id}`}
+        data-latitude={p.latitude}
+        data-longitude={p.longitude}
+        style={{
+          borderBottom: "1px solid #e5e7eb",
+          padding: "0.75rem",
+          backgroundColor:
+            selectedPropertyId === p.id ? "#dbeafe" : "white"
+        }}
+      >
+        <div data-testid={`property-title-${p.id}`}>{p.title}</div>
+        <div data-testid={`property-price-${p.id}`}>
+          ${p.price.toLocaleString()}
         </div>
+        <div data-testid={`property-address-${p.id}`}>
+          {p.address}, {p.city}, {p.state} {p.zipcode}
+        </div>
+        <button
+          type="button"
+          data-testid={`save-property-${p.id}`}
+          onClick={() => handleSaveProperty(p)}
+        >
+          Save
+        </button>
+      </div>
+    ))
+  )}
+</div>
+
       </div>
     </div>
   );
