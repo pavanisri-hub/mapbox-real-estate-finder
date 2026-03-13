@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 const AdvancedSearchPage = () => {
   const [locationQuery, setLocationQuery] = useState("");
-  const [radiusKm, setRadiusKm] = useState(10);
+  const [radiusKm, setRadiusKm] = useState(25);
   const [priceMin, setPriceMin] = useState("");
   const [priceMax, setPriceMax] = useState("");
   const [bedrooms, setBedrooms] = useState("");
@@ -81,9 +81,6 @@ const AdvancedSearchPage = () => {
           Apply filters
         </button>
       </div>
-
-      {/* You can compute results count using the same filters in PropertiesPage,
-          but for now keep it static or wire it later */}
       <div data-testid="results-count">0 results</div>
     </div>
   );
